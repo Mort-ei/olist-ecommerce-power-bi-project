@@ -1,0 +1,48 @@
+// calculating total Revenue from orderitem fact
+// you can also calculate total revenue by suming up the total freight and total sales
+
+Total Revenue = 
+SUMX(
+    'OrderItems Fact',
+    'OrderItems Fact'[Price] + 'OrderItems Fact'[Freight Value]
+)
+
+// Calculating the total orders from orderfact
+Total Orders = 
+DISTINCTCOUNT(
+    'OrderItems Fact'[Order ID]
+)
+
+// Calculating Aov 
+Average Orders Value = 
+DIVIDE( [Total Revenue], [Total Orders])
+
+// Calculating Total Customers from customer dim
+Total Customers = 
+DISTINCTCOUNT(
+    'Orders Fact'[Customer Unique ID]
+)
+
+// total Sales from orderitem fact
+Total Sales = 
+SUM('OrderItems Fact'[Price])
+
+// total freight
+Total Freight = 
+SUM(
+    'OrderItems Fact'[Freight Value]
+)
+
+// total payment from the order peyment fact 
+Total Payments = 
+COUNTROWS ( 'Order Payments Fact' )
+
+// total payment value from the order peyment fact 
+Total Payment Value = 
+SUM ( 'Order Payments Fact'[Payment Value] )
+
+// total reviews from order review fact
+Total Reviews = 
+COUNTROWS ( 'Order Review Fact' )
+
+
