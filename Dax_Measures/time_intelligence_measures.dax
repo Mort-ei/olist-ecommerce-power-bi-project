@@ -1,0 +1,133 @@
+// Month to Date Revenue
+
+MTD Revenue = 
+TOTALMTD(
+    [Total Revenue],
+    'Calendar Lookup'[Date]
+)
+
+// Previous Month Revenue 
+Previous Month Revenue = 
+CALCULATE(
+    [Total Revenue],
+    PREVIOUSMONTH('Calendar Lookup'[Date])
+)
+
+
+Rolling 12-Month Sales = 
+CALCULATE(
+    [Total Revenue],
+    DATESINPERIOD(
+        'Calendar Lookup'[Date],
+        MAX('Calendar Lookup'[Date]),
+        -12,
+        MONTH
+    )
+)
+
+// year to date Revenue
+YTD Sales = 
+CALCULATE(
+    [Total Revenue],
+    DATESYTD('Calendar Lookup'[Date])
+)
+
+// Month over Month Revnue
+MoM Sales % = 
+VAR MaxDateInSlicer =
+    MAX('Calendar Lookup'[Date])
+
+VAR CurrentMonthStart =
+    DATE(YEAR(MaxDateInSlicer), MONTH(MaxDateInSlicer), 1)
+
+VAR PrevMonthStart =
+    EDATE(CurrentMonthStart, -1)
+
+VAR CurrentMonthRevenue =
+    CALCULATE(
+        [Total Revenue],
+        'Calendar Lookup'[Start of Month] = CurrentMonthStart
+    )
+
+VAR PrevMonthRevenue =
+    CALCULATE(
+        [Total Revenue],
+        'Calendar Lookup'[Start of Month] = PrevMonthStart
+    )
+
+RETURN
+IF(
+    NOT ISBLANK(CurrentMonthRevenue) && NOT ISBLANK(PrevMonthRevenue),
+    DIVIDE(CurrentMonthRevenue - PrevMonthRevenue, PrevMonthRevenue),
+    BLANK()
+)
+
+// This Month vs This Month Last Year Revenue
+MoM YoY % = 
+VAR SelectedMonth =
+    MAX( 'Calendar Lookup'[Start of Month] )
+
+VAR ThisMonthRevenue =
+    CALCULATE(
+        [Total Revenue],
+        KEEPFILTERS( 'Calendar Lookup'[Start of Month] = SelectedMonth )
+    )
+
+VAR LastYearRevenue =
+    CALCULATE(
+        [Total Revenue],
+        KEEPFILTERS(
+            'Calendar Lookup'[Start of Month]
+                = EDATE( SelectedMonth, -12 )
+        )
+    )
+
+VAR Growth =
+    DIVIDE(
+        ThisMonthRevenue - LastYearRevenue,
+        LastYearRevenue,
+        BLANK()    
+    )
+
+RETURN
+
+    COALESCE( Growth, 0)
+
+
+// year over year revenue
+YoY Sales % = 
+VAR MaxDateInSlicer =
+    MAX( 'Calendar Lookup'[Date] )
+
+VAR SelectedYear =
+    YEAR( MaxDateInSlicer )
+
+VAR PrevYear =
+    SelectedYear - 1
+
+VAR CurrentYearRevenue =
+    CALCULATE(
+        [Total Revenue],
+
+        KEEPFILTERS( YEAR('Calendar Lookup'[Date]) = SelectedYear )
+    )
+
+VAR PrevYearRevenue =
+    CALCULATE(
+        [Total Revenue],
+
+        KEEPFILTERS( YEAR('Calendar Lookup'[Date]) = PrevYear )
+    )
+
+VAR Growth =
+    DIVIDE(
+        CurrentYearRevenue - PrevYearRevenue,
+        PrevYearRevenue,
+        BLANK()  
+    )
+
+RETURN
+
+    COALESCE( Growth, 0 )
+
+ 
