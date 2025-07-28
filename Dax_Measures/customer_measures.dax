@@ -1,0 +1,116 @@
+// Showing the active customers in respect to the date slicer
+Active Customers = 
+DISTINCTCOUNT ( 'Orders Fact'[Customer Unique ID] )
+
+// for customers that have had at least one purchase 
+Customers ≥1 Purchase = 
+DISTINCTCOUNT( 
+  'Orders Fact'[Customer Unique ID]
+)
+
+//for customers that have had more than one purchase 
+Customers ≥2 Purchases = 
+VAR CustList =
+    ADDCOLUMNS(
+      VALUES( 'Orders Fact'[Customer Unique ID] ),
+      "@OrderCount",
+      CALCULATE( COUNTROWS( 'Orders Fact' ) )
+    )
+RETURN
+    COUNTROWS( FILTER( CustList, [@OrderCount] >= 2 ) )
+
+//for customers that have had more than twice purchases
+Customers ≥3 Purchases = 
+VAR CustList =
+    ADDCOLUMNS(
+      VALUES( 'Orders Fact'[Customer Unique ID] ),
+      "@OrderCount",
+      CALCULATE( COUNTROWS( 'Orders Fact' ) )
+    )
+RETURN
+    COUNTROWS( FILTER( CustList, [@OrderCount] >= 3 ) )
+
+// a measure for ranking the customers based on their occurence of orders whcih further was used for a funnel chart
+Customers by Stage = 
+SWITCH(
+  SELECTEDVALUE( 'Funnel Stages'[Stage] ),
+  "1st Purchase", [Customers ≥1 Purchase],
+  "2nd Purchase", [Customers ≥2 Purchases],
+  "3rd Purchase", [Customers ≥3 Purchases],
+  BLANK()
+)
+
+// new customers in respect to the period of date that have had no purchase
+New Customers = 
+VAR MinDate = CALCULATE(MIN('Calendar Lookup'[Date]), ALLSELECTED('Calendar Lookup'))
+VAR MaxDate = CALCULATE(MAX('Calendar Lookup'[Date]), ALLSELECTED('Calendar Lookup'))
+RETURN
+CALCULATE(
+    DISTINCTCOUNT('Orders Fact'[Customer Unique ID]),
+    FILTER(
+        VALUES('Orders Fact'[Customer Unique ID]),
+        CALCULATE(MIN('Orders Fact'[Purchase Date])) >= MinDate &&
+        CALCULATE(MIN('Orders Fact'[Purchase Date])) <= MaxDate &&
+        CALCULATE(
+            COUNTROWS(
+                FILTER(
+                    'Orders Fact',
+                    'Orders Fact'[Purchase Date] >= MinDate &&
+                    'Orders Fact'[Purchase Date] <= MaxDate
+                )
+            )
+        ) = 1 -- only one purchase in period
+    )
+)
+
+// customrs that have returned to take order again
+Returning Customers = 
+[Total Customers] - [New Customers]
+
+// showcasing that how many of our customers have returned over the course of time
+Repeat Rate % = 
+DIVIDE ( [Returning Customers], [Total Customers] ) 
+
+
+// below are the dax for (cc) in customers dim and unique customers dim table
+Frequency = 
+COUNTROWS ( RELATEDTABLE ( 'Orders Fact' ) )
+
+Recency Days = 
+DATEDIFF ( [Last Purchase Date], [Reference Date], DAY )
+
+Monetary = 
+SUMX (
+    RELATEDTABLE ( 'Orders Fact' ),
+    'Orders Fact'[Order Revenue]
+)
+
+First Purchase Date = 
+CALCULATE (
+    MIN ( 'Orders Fact'[Purchase Date] ),
+    FILTER (
+        'Orders Fact',
+        'Orders Fact'[Customer Unique ID]
+            = EARLIER ( 'Customer Dim'[Customer Unique ID] )
+    )
+)
+
+
+Second Purchase Month = 
+VAR CustomerID = 'Customer Dim'[Customer Unique ID]
+VAR FirstPurchaseDate =
+    CALCULATE (
+        MIN ( 'Orders Fact'[Purchase Date] ),
+        FILTER ( 'Orders Fact', 'Orders Fact'[Customer Unique ID] = CustomerID )
+    )
+RETURN
+CALCULATE (
+        MINX (
+            FILTER (
+                'Orders Fact',
+                'Orders Fact'[Customer Unique ID] = CustomerID &&
+                'Orders Fact'[Purchase Date] > FirstPurchaseDate
+            ),
+            'Orders Fact'[Purchase Date]
+        )
+)

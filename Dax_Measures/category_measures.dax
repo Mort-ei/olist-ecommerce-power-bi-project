@@ -1,0 +1,88 @@
+
+// category average order value
+Category AOV = 
+DIVIDE ( [Category Revenue], [Category Orders], 0 )
+
+//categories customer
+Category Customers = 
+CALCULATE(
+  DISTINCTCOUNT( 'Orders Fact'[Customer Unique ID] ),
+  ALLSELECTED( 'Category Dim'[Category EN] ),
+  CROSSFILTER(
+    'Orders Fact'[Order ID],
+    'OrderItems Fact'[Order ID],
+    BOTH
+  )
+)
+
+// category mtd revenue
+Category Monthly Revenue = 
+CALCULATE(
+    [Category Revenue],
+    DATESMTD('Calendar Lookup'[Date])
+)
+
+// category this month last year revenue
+Category Monthly Revenue PY = 
+CALCULATE(
+  [Category Revenue],
+  SAMEPERIODLASTYEAR( 'Calendar Lookup'[Date] )
+)
+
+// the measure for the card visual in the category detial page
+Category Name = 
+IF(
+    HASONEVALUE('Category Dim'[Category EN]),
+    MAX( 'Category Dim'[Category EN] ),
+    "All Categories"
+)
+
+Category Orders = 
+CALCULATE (
+    [Total Orders],
+    ALLSELECTED('Category Dim'[Category EN])
+)
+
+// measure for the top 10 sellers in the category detail
+Seller AOV = 
+DIVIDE(
+  [Seller Revenue],
+  CALCULATE(
+    DISTINCTCOUNT( 'OrderItems Fact'[Order ID] ),
+    ALLSELECTED( 'Category Dim'[Category EN] )
+  ),
+  0
+)
+
+Seller Items = 
+CALCULATE(
+  COUNTROWS( 'Orderitems Fact' ),
+  ALLSELECTED( 'Category Dim'[Category EN] )
+)
+
+Seller Orders = 
+CALCULATE(
+  DISTINCTCOUNT( 'OrderItems Fact'[Order ID] ),
+  ALLSELECTED( 'Category Dim'[Category EN] )
+)
+
+Seller Revenue = 
+CALCULATE(
+  SUM( 'Orderitems Fact'[price] ),
+  ALLSELECTED( 'Category Dim'[Category EN] )
+)
+
+Seller Revenue PY = 
+CALCULATE(
+  [Seller Revenue],
+  SAMEPERIODLASTYEAR( 'Calendar Lookup'[Date] )
+)
+
+Seller Revenue YoY % = 
+DIVIDE(
+  [Seller Revenue] - [Seller Revenue PY],
+  [Seller Revenue PY],
+  "No Value"
+)
+
+// you can use any of this measures that you want in the sellers matrix visual
