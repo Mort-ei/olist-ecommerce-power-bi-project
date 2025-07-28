@@ -1,0 +1,45 @@
+
+// Caluclating the avg score across all comments and reviews
+Avg Review Score = 
+AVERAGE( 'Order Review Fact'[Score] )
+
+//counting all the reviews
+Total Reviews = 
+COUNTROWS ( 'Order Review Fact' )
+
+// calculating the total comments
+Total Comments = 
+COUNTROWS(
+  FILTER(
+    'Order Review Fact',
+    NOT('Order Review Fact'[Comment] = "Nan" )
+  )
+)
+
+// showing what percentage of the payments have had reviews
+Review Penetration % = 
+DIVIDE(
+    [Total Reviews],
+    [Total Payments],   
+    0
+)
+
+// mtd review count
+Monthly Review Count = 
+  CALCULATE(
+    [Total Reviews],
+    DATESINPERIOD( 'Calendar Lookup'[Date],
+      MAX( 'Calendar Lookup'[Date] ),
+      -12, MONTH
+    )
+  )
+
+
+Total Payment Value = 
+SUM ( 'Order Payments Fact'[Payment Value] )
+
+// for calculating % of a specific payment type 
+Payment Mix % = 
+DIVIDE ( [Total Payment Value ($)]
+       , CALCULATE ( [Total Payment Value ($)], ALL ( 'Payment Type' ) )
+)
