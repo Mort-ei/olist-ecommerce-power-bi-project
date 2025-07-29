@@ -59,7 +59,7 @@ From the provided report:
 
 ## Features
 - Interactive filters for **time periods, categories, and geographies**.
-- Drill-down capability for detailed insights (e.g., category → product → seller).
+- Drill-down capability for detailed insights (e.g., Executive Overview → Category Detail).
 - Time intelligence metrics: **YTD, MTD, YoY, and MoM** growth.
 - Customer segmentation using **RFM metrics**.
 - **Payment mix analysis** to track revenue share by payment type.
